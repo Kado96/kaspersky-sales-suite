@@ -3,6 +3,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import axios from 'axios';
 import { Loader2, CheckCircle2, XCircle, Clock } from 'lucide-react';
 import { useConfig } from '../context/ConfigContext';
+import { API_URL } from '../lib/siteConfig';
 
 const PaymentResult: React.FC = () => {
   const [searchParams] = useSearchParams();
@@ -36,7 +37,7 @@ const PaymentResult: React.FC = () => {
     const checkStatus = async () => {
       try {
           // Poll our backend which proxies to AfriPay
-        const response = await axios.get(`http://localhost:5001/api/check-status/${txnId}`);
+        const response = await axios.get(`${API_URL}/check-status/${txnId}`);
         const data = response.data;
 
         if (data.status === 'SUCCESS' || data.status === 'COMPLETED' || data.response_code === '00') {
@@ -44,7 +45,7 @@ const PaymentResult: React.FC = () => {
           setMessage('Paiement validé ! Un email vous a été envoyé.');
           
           // Save transaction to backend
-          await axios.post('http://localhost:5001/api/transactions', {
+          await axios.post(`${API_URL}/transactions`, {
             id: txnId,
             email: email,
             amount: config.price,
@@ -53,7 +54,7 @@ const PaymentResult: React.FC = () => {
           });
 
           // Notify (send email)
-          await axios.post('http://localhost:5001/api/notify-payment', {
+          await axios.post(`${API_URL}/notify-payment`, {
             email: email,
             transactionId: txnId,
             status: 'success'
@@ -84,7 +85,7 @@ const PaymentResult: React.FC = () => {
         
         // Notify delay
         if (email) {
-            axios.post('http://localhost:5001/api/notify-payment', {
+            axios.post(`${API_URL}/notify-payment`, {
                 email: email,
                 transactionId: txnId,
                 status: 'pending_delayed'

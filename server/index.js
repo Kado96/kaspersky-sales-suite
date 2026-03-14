@@ -9,7 +9,11 @@ require('dotenv').config();
 const app = express();
 const PORT = process.env.PORT || 5001;
 
-app.use(cors());
+app.use(cors({
+    origin: ['http://localhost:8080', 'http://kukasoko.wuaze.com', 'https://kukasoko.wuaze.com'],
+    methods: ['GET', 'POST'],
+    allowedHeaders: ['Content-Type', 'Authorization']
+}));
 app.use(express.json());
 
 const CONFIG_FILE = path.join(__dirname, 'config.json');

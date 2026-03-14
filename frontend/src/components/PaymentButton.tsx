@@ -2,6 +2,11 @@ import React, { useState } from 'react';
 import { Mail, CreditCard, Smartphone } from 'lucide-react';
 import { useConfig } from '../context/ConfigContext';
 import axios from 'axios';
+import { API_URL } from '../lib/siteConfig';
+
+const FRONTEND_URL = import.meta.env.PROD 
+  ? 'http://kukasoko.wuaze.com' 
+  : 'http://localhost:8080';
 
 const PaymentButton: React.FC = () => {
   const { config } = useConfig();
@@ -19,7 +24,7 @@ const PaymentButton: React.FC = () => {
     localStorage.setItem('pending_txn_id', txnId);
 
     // Capture IMMÉDIATE de l'email dans l'admin pour ne pas perdre le lead
-    axios.post('http://localhost:5001/api/transactions', {
+    axios.post(`${API_URL}/transactions`, {
       id: txnId,
       email: email,
       amount: config.price,
@@ -37,9 +42,9 @@ const PaymentButton: React.FC = () => {
       'currency': config.currency,
       'comment': `Achat ${config.productName} - ${email}`,
       'client_token': txnId,
-      'return_url': 'http://localhost:8080/',
-      'cancel_url': 'http://localhost:8080/',
-      'back_url': 'http://localhost:8080/',
+      'return_url': `${FRONTEND_URL}/paiement/resultat`,
+      'cancel_url': `${FRONTEND_URL}/`,
+      'back_url': `${FRONTEND_URL}/`,
       'app_id': '5b47c080a61d5652c3696cbdf2f8a8cd',
       'app_secret': 'JDJ5JDEwJHNPRHp3'
     };

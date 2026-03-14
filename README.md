@@ -33,9 +33,16 @@ Le serveur gère l'authentification, les transactions et l'envoi d'emails.
    AFRIPAY_APP_SECRET=votre_secret
    EMAIL_USER=votre_email@gmail.com
    EMAIL_PASS=votre_mot_de_passe_app
-   ADMIN_USER=votre_user_admin
-   ADMIN_PASS=votre_password_admin
+   ADMIN_USER=donald
+   ADMIN_PASS=admin
    ```
+
+### Note de Déploiement (Cloud/VPS)
+Si vous déployez sur une plateforme comme InfinityFree ou Heroku :
+- **Root Directory** : `server`
+- **Build Command** : `npm install`
+- **Start Command** : `node index.js`
+
 
 ### 3. Configuration du Frontend (`/frontend`)
 Le frontend est l'interface client et le panneau d'administration.

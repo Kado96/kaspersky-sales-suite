@@ -2,6 +2,7 @@ import { Smartphone, Clock, Loader2, CheckCircle2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { useConfig } from "@/context/ConfigContext";
+import { API_URL } from "@/lib/siteConfig";
 
 const steps = [
   { num: 1, text: "Composez", bold: "*163#" },
@@ -26,7 +27,7 @@ const Paiement = () => {
         const txnId = localStorage.getItem('pending_txn_id');
         if (!txnId) return;
 
-        const res = await fetch(`http://localhost:5001/api/check-status/${txnId}`);
+        const res = await fetch(`${API_URL}/check-status/${txnId}`);
         const data = await res.json();
         if (data.status === "SUCCESS" || data.status === "COMPLETED" || data.response_code === "00") {
           navigate("/paiement/succes");

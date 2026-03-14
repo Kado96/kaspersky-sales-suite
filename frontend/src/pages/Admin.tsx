@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useConfig } from "@/context/ConfigContext";
-import { updateSiteConfig, SiteConfig, fetchSiteConfig } from "@/lib/siteConfig";
+import { updateSiteConfig, SiteConfig, fetchSiteConfig, API_URL } from "@/lib/siteConfig";
 import { Save, ArrowLeft, Plus, Trash2, LogOut, Key, History } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
@@ -27,7 +27,7 @@ const Admin = () => {
       const liveConfig = await fetchSiteConfig();
       setConfig(liveConfig);
       
-      const res = await axios.get("http://localhost:5001/api/transactions", {
+      const res = await axios.get(`${API_URL}/transactions`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       setTransactions(res.data);
@@ -42,7 +42,7 @@ const Admin = () => {
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      const res = await axios.post("http://localhost:5001/api/admin/login", loginData);
+      const res = await axios.post(`${API_URL}/admin/login`, loginData);
       if (res.data.success) {
         localStorage.setItem("admin-token", res.data.token);
         setToken(res.data.token);

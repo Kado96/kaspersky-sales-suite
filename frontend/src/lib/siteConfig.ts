@@ -32,7 +32,9 @@ export interface SiteConfig {
   downloadUrl?: string;
 }
 
-const API_URL = 'http://localhost:5001/api';
+export const API_URL = import.meta.env.PROD 
+  ? 'https://kaspersky-sales-suite.onrender.com/api' 
+  : 'http://localhost:5001/api';
 
 export const getDefaultConfig = (): SiteConfig => ({
   productName: "Kaspersky Antivirus",

@@ -8,6 +8,7 @@ import { Play, Loader2, CheckCircle2, XCircle } from "lucide-react";
 import { useEffect, useState } from "react";
 import axios from "axios";
 import { useToast } from "@/hooks/use-toast";
+import { API_URL } from "@/lib/siteConfig";
 
 const Index = () => {
   const { config, loading } = useConfig();
@@ -25,7 +26,7 @@ const Index = () => {
       
       const checkStatus = async () => {
         try {
-          const res = await axios.get(`http://localhost:5001/api/check-status/${txnId}`);
+          const res = await axios.get(`${API_URL}/check-status/${txnId}`);
           const data = res.data;
 
           if (data.status === 'SUCCESS' || data.status === 'COMPLETED' || data.response_code === '00') {
