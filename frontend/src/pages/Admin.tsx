@@ -10,7 +10,7 @@ const Admin = () => {
   const { refreshConfig } = useConfig();
   const [config, setConfig] = useState<SiteConfig | null>(null);
   const [token, setToken] = useState<string | null>(localStorage.getItem("admin-token"));
-  const [activeTab, setActiveTab] = useState<"general" | "pricing" | "content" | "history" | "testimonials">("general");
+  const [activeTab, setActiveTab] = useState<"general" | "pricing" | "content" | "history" | "testimonials" | "notifs">("general");
   const [transactions, setTransactions] = useState<any[]>([]);
   const [loginData, setLoginData] = useState({ username: "", password: "" });
   
@@ -142,6 +142,7 @@ const Admin = () => {
           <TabButton active={activeTab === "pricing"} onClick={() => setActiveTab("pricing")}>Paiement</TabButton>
           <TabButton active={activeTab === "content"} onClick={() => setActiveTab("content")}>Cartes</TabButton>
           <TabButton active={activeTab === "testimonials"} onClick={() => setActiveTab("testimonials")}>Avis</TabButton>
+          <TabButton active={activeTab === "notifs"} onClick={() => setActiveTab("notifs")}>Notifs</TabButton>
           <TabButton active={activeTab === "history"} onClick={() => setActiveTab("history")}>
             <div className="flex items-center gap-2"><History className="w-4 h-4" /> Historique</div>
           </TabButton>
@@ -154,6 +155,26 @@ const Admin = () => {
               <Field label="Sous-titre Hero" value={config.heroSubtitle} onChange={(v) => update("heroSubtitle", v)} />
               <Field label="Hue Primaire (CSS)" value={config.primaryHue || "160"} onChange={(v) => update("primaryHue", v)} />
               <Field label="Fin Compte à rebours (ISO)" value={config.countdownEndDate} onChange={(v) => update("countdownEndDate", v)} />
+              <div className="pt-4 border-t border-border mt-4">
+                <h3 className="text-xs font-bold text-primary mb-3">VIDÉO TUTORIEL</h3>
+                <Field 
+                  label="URL Vidéo YouTube" 
+                  value={config.videoUrl} 
+                  onChange={(v) => {
+                    let finalUrl = v;
+                    if (v.includes("watch?v=")) {
+                      finalUrl = v.replace("watch?v=", "embed/").split('&')[0];
+                    } else if (v.includes("youtu.be/")) {
+                      finalUrl = v.replace("youtu.be/", "www.youtube.com/embed/");
+                    }
+                    update("videoUrl", finalUrl);
+                  }} 
+                />
+                <p className="text-[9px] text-muted-foreground mt-1 mb-2 ml-1 italic opacity-70">Supporte les liens standards et embed.</p>
+                <Field label="Titre Vidéo" value={config.videoTitle} onChange={(v) => update("videoTitle", v)} />
+                <Field label="Description Vidéo" value={config.videoDescription} onChange={(v) => update("videoDescription", v)} />
+              </div>
+
               <div className="pt-4 border-t border-border mt-4">
                 <h3 className="text-xs font-bold text-primary mb-3">FOOTER</h3>
                 <Field label="Titre Footer" value={config.footerTitle} onChange={(v) => update("footerTitle", v)} />
@@ -240,6 +261,46 @@ const Admin = () => {
                 >
                   <Plus className="w-4 h-4" /> Ajouter un avis
                 </button>
+              </div>
+            </Section>
+          )}
+
+          {activeTab === "notifs" && (
+            <Section title="Messages & Notifications de Paiement">
+              <div className="space-y-6">
+                <div className="space-y-3">
+                  <h3 className="text-[10px] font-black text-primary tracking-widest uppercase">EN ATTENTE (NOTIF FLOTTANTE)</h3>
+                  <Field label="Titre Attente" value={config.pending_title || ""} onChange={(v) => update("pending_title", v)} />
+                  <Field label="Sous-titre Attente" value={config.pending_subtitle || ""} onChange={(v) => update("pending_subtitle", v)} />
+                </div>
+                
+                <div className="pt-4 border-t border-border mt-4 space-y-3">
+                  <h3 className="text-[10px] font-black text-cyber-green tracking-widest uppercase">SUCCÈS (TOAST RAPIDE)</h3>
+                  <Field label="Titre Succès" value={config.success_toast_title || ""} onChange={(v) => update("success_toast_title", v)} />
+                  <Field label="Message Succès" value={config.success_toast_subtitle || ""} onChange={(v) => update("success_toast_subtitle", v)} />
+                </div>
+
+                <div className="pt-4 border-t border-border mt-4 space-y-3">
+                  <h3 className="text-[10px] font-black text-destructive tracking-widest uppercase">ÉCHEC (TOAST ERREUR)</h3>
+                  <Field label="Titre Échec" value={config.error_toast_title || ""} onChange={(v) => update("error_toast_title", v)} />
+                  <Field label="Message Échec" value={config.error_toast_subtitle || ""} onChange={(v) => update("error_toast_subtitle", v)} />
+                </div>
+
+                <div className="pt-4 border-t border-border mt-4 space-y-3">
+                  <h3 className="text-[10px] font-black text-primary tracking-widest uppercase">PAGES DE STATUT</h3>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div className="space-y-3">
+                      <p className="text-[9px] font-bold text-cyber-green uppercase opacity-70">Page Succès</p>
+                      <Field label="Titre Page Succès" value={config.success_page_title || ""} onChange={(v) => update("success_page_title", v)} />
+                      <Field label="Sous-titre Page Succès" value={config.success_page_subtitle || ""} onChange={(v) => update("success_page_subtitle", v)} />
+                    </div>
+                    <div className="space-y-3">
+                      <p className="text-[9px] font-bold text-destructive uppercase opacity-70">Page Échec</p>
+                      <Field label="Titre Page Échec" value={config.error_page_title || ""} onChange={(v) => update("error_page_title", v)} />
+                      <Field label="Sous-titre Page Échec" value={config.error_page_subtitle || ""} onChange={(v) => update("error_page_subtitle", v)} />
+                    </div>
+                  </div>
+                </div>
               </div>
             </Section>
           )}

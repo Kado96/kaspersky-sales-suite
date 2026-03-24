@@ -1,5 +1,6 @@
 import { XCircle, RefreshCw, AlertTriangle, ArrowLeft } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { useConfig } from "@/context/ConfigContext";
 
 const reasons = [
   "Solde insuffisant sur votre compte",
@@ -10,6 +11,7 @@ const reasons = [
 
 const PaiementEchec = () => {
   const navigate = useNavigate();
+  const { config } = useConfig();
 
   return (
     <div className="min-h-screen bg-background flex items-center justify-center p-4">
@@ -23,12 +25,12 @@ const PaiementEchec = () => {
 
         {/* Title */}
         <div>
-          <h1 className="font-display text-3xl font-black text-foreground mb-1">
-            Paiement <span className="text-destructive">Échoué</span>
-          </h1>
-          <p className="text-sm text-muted-foreground">
-            La transaction n'a pas pu être complétée. Aucun montant n'a été débité.
-          </p>
+            <h1 className="font-display text-3xl font-black text-foreground mb-1">
+              {config.error_page_title || "Paiement Échoué"}
+            </h1>
+            <p className="text-sm text-muted-foreground">
+              {config.error_page_subtitle || "La transaction n'a pas pu être complétée. Aucun montant n'a été débité."}
+            </p>
         </div>
 
         {/* Reasons */}

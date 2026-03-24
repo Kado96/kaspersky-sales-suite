@@ -30,11 +30,21 @@ export interface SiteConfig {
   trustBadge2: string;
   primaryHue?: string;
   downloadUrl?: string;
+  // Notifications
+  pending_title?: string;
+  pending_subtitle?: string;
+  success_toast_title?: string;
+  success_toast_subtitle?: string;
+  error_toast_title?: string;
+  error_toast_subtitle?: string;
+  success_page_title?: string;
+  success_page_subtitle?: string;
+  success_page_steps?: string[];
+  error_page_title?: string;
+  error_page_subtitle?: string;
 }
 
-export const API_URL = import.meta.env.PROD 
-  ? 'https://kaspersky-sales-suite.onrender.com/api' 
-  : 'http://localhost:5001/api';
+export const API_URL = import.meta.env.VITE_API_URL || 'https://kaspersky-sales-suite.onrender.com/api';
 
 export const getDefaultConfig = (): SiteConfig => ({
   productName: "Kaspersky Antivirus",
@@ -80,7 +90,23 @@ export const getDefaultConfig = (): SiteConfig => ({
   trustBadge1: "🔒 SÉCURISÉ DE BOUT EN BOUT",
   trustBadge2: "✅ Vérifié et Partenaire Officiel",
   primaryHue: "160", // Greenish
-  downloadUrl: "https://drive.google.com/file/d/1jk5kbmm74K6nf9OYcs03aJ0Zd1-GCY74/view?usp=drive_link"
+  downloadUrl: "https://drive.google.com/file/d/1jk5kbmm74K6nf9OYcs03aJ0Zd1-GCY74/view?usp=drive_link",
+  pending_title: "VÉRIFICATION DU PAIEMENT",
+  pending_subtitle: "Une fois validé sur votre mobile, vous recevrez un mail.",
+  success_toast_title: "Paiement Validé !",
+  success_toast_subtitle: "Votre licence vous a été envoyée par email.",
+  error_toast_title: "Paiement échoué",
+  error_toast_subtitle: "La transaction a été annulée ou a échoué.",
+  success_page_title: "Paiement RÉUSSI !",
+  success_page_subtitle: "Votre licence {productName} a été activée avec succès.",
+  success_page_steps: [
+    "Téléchargez le fichier d'installation",
+    "Ouvrez le fichier et suivez les instructions",
+    "Entrez votre clé de licence (envoyée par email)",
+    "Profitez de votre protection complète !"
+  ],
+  error_page_title: "Paiement ÉCHOUÉ !",
+  error_page_subtitle: "La transaction n'a pas pu être complétée. Aucun montant n'a été débité."
 });
 
 export async function fetchSiteConfig(): Promise<SiteConfig> {

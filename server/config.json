@@ -3,7 +3,7 @@
   "subtitle": "MULTI-APPAREILS",
   "heroTitle": "KASPERSKY",
   "heroSubtitle": "Un investissement pour votre tranquillité d'esprit. Protégez-vous dès aujourd'hui.",
-  "price": "30 000",
+  "price": "1 000",
   "currency": "BIF",
   "paymentNote": "PAIEMENT UNIQUE · LICENCE 1 AN",
   "features": [
@@ -16,7 +16,7 @@
     "Blocage des ransomwares",
     "Support technique 24/7"
   ],
-  "videoUrl": "https://www.youtube.com/embed/dQw4w9WgXcQ",
+  "videoUrl": "https://www.youtube.com/embed/qMaNQ2Nydn0",
   "videoTitle": "TUTORIEL D'INSTALLATION",
   "videoDescription": "Suivez ce guide vidéo étape par étape pour sécuriser votre appareil en moins de 3 minutes.",
   "ctaText": "PROCÉDER AU PAIEMENT",
@@ -57,10 +57,21 @@
     }
   ],
   "footerText": "© 2026 · Revendeur agréé Kaspersky. Tous droits réservés.",
+  "footerTitle": "KASPERSKY.",
   "trustBadge1": "🔒 SÉCURISÉ DE BOUT EN BOUT",
   "trustBadge2": "✅ Vérifié et Partenaire Officiel",
   "primaryHue": "160",
   "downloadUrl": "https://drive.google.com/file/d/1jk5kbmm74K6nf9OYcs03aJ0Zd1-GCY74/view?usp=drive_link",
+  "pending_title": "VÉRIFICATION DU PAIEMENT",
+  "pending_subtitle": "Une fois validé sur votre mobile, vous recevrez un mail.",
+  "success_toast_title": "Paiement Validé !",
+  "success_toast_subtitle": "Votre licence vous a été envoyée par email.",
+  "error_toast_title": "Paiement échoué",
+  "error_toast_subtitle": "La transaction a été annulée ou a échoué.",
+  "success_page_title": "Paiement RÉUSSI !",
+  "success_page_subtitle": "Votre licence Kaspersky a été activée avec succès.",
+  "error_page_title": "Paiement ÉCHOUÉ !",
+  "error_page_subtitle": "La transaction n'a pas pu être complétée. Aucun montant n'a été débité.",
   "testimonials": [
     {
       "name": "Nouveau Client",

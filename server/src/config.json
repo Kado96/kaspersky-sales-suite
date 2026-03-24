@@ -34,5 +34,15 @@
   ],
   "footerText": "© 2025 · Revendeur agréé Kaspersky. Tous droits réservés.",
   "trustBadge1": "🔒 SÉCURISÉ DE BOUT EN BOUT",
-  "trustBadge2": "✅ Vérifié et Partenaire Officiel"
+  "trustBadge2": "✅ Vérifié et Partenaire Officiel",
+  "pending_title": "VÉRIFICATION DU PAIEMENT",
+  "pending_subtitle": "Une fois validé sur votre mobile, vous recevrez un mail.",
+  "success_toast_title": "Paiement Validé !",
+  "success_toast_subtitle": "Votre licence vous a été envoyée par email.",
+  "error_toast_title": "Paiement échoué",
+  "error_toast_subtitle": "La transaction a été annulée ou a échoué.",
+  "success_page_title": "Paiement RÉUSSI !",
+  "success_page_subtitle": "Votre licence Kaspersky a été activée avec succès.",
+  "error_page_title": "Paiement ÉCHOUÉ !",
+  "error_page_subtitle": "La transaction n'a pas pu être complétée. Aucun montant n'a été débité."
 }

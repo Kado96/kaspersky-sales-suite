@@ -19,12 +19,12 @@ const PaiementSucces = () => {
 
         {/* Title */}
         <div>
-          <h1 className="font-display text-3xl font-black text-foreground mb-1">
-            Paiement <span className="text-cyber-green">Réussi</span> !
-          </h1>
-          <p className="text-sm text-muted-foreground">
-            Votre licence {config.productName} a été activée avec succès.
-          </p>
+            <h1 className="font-display text-3xl font-black text-foreground mb-1">
+              {config.success_page_title || "Paiement Réussi !"}
+            </h1>
+            <p className="text-sm text-muted-foreground">
+              {config.success_page_subtitle || `Votre licence ${config.productName} a été activée avec succès.`}
+            </p>
         </div>
 
         {/* Receipt */}

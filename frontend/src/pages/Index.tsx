@@ -31,8 +31,8 @@ const Index = () => {
 
           if (data.status === 'SUCCESS' || data.status === 'COMPLETED' || data.response_code === '00') {
             toast({
-              title: "Paiement Validé !",
-              description: "Votre licence vous a été envoyée par email.",
+              title: config.success_toast_title || "Paiement Validé !",
+              description: config.success_toast_subtitle || "Votre licence vous a été envoyée par email.",
               variant: "default",
             });
             localStorage.removeItem('pending_txn_id');
@@ -41,8 +41,8 @@ const Index = () => {
             return true;
           } else if (data.status === 'FAILED' || data.status === 'CANCELLED') {
             toast({
-              title: "Paiement échoué",
-              description: "La transaction a été annulée ou a échoué.",
+              title: config.error_toast_title || "Paiement échoué",
+              description: config.error_toast_subtitle || "La transaction a été annulée ou a échoué.",
               variant: "destructive",
             });
             localStorage.removeItem('pending_txn_id');
@@ -95,8 +95,8 @@ const Index = () => {
           <div className="fixed bottom-4 right-4 z-50 glass-card neon-border p-4 rounded-xl flex items-center gap-3 animate-in fade-in slide-in-from-bottom-4">
             <Loader2 className="w-5 h-5 text-primary animate-spin" />
             <div className="text-left">
-              <p className="text-xs font-bold text-primary uppercase tracking-widest">Vérification du paiement</p>
-              <p className="text-[10px] text-muted-foreground">Une fois validé sur votre mobile, vous recevrez un mail.</p>
+              <p className="text-xs font-bold text-primary uppercase tracking-widest">{config.pending_title || "Vérification du paiement"}</p>
+              <p className="text-[10px] text-muted-foreground">{config.pending_subtitle || "Une fois validé sur votre mobile, vous recevrez un mail."}</p>
             </div>
           </div>
         )}
