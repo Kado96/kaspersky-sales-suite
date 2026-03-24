@@ -1,4 +1,5 @@
-import { XCircle, RefreshCw, AlertTriangle, ArrowLeft } from "lucide-react";
+import { XCircle, RefreshCw, AlertTriangle, ArrowLeft, MessageCircle } from "lucide-react";
+import supportImg from "@/assets/payment_support.png";
 import { useNavigate } from "react-router-dom";
 import { useConfig } from "@/context/ConfigContext";
 
@@ -67,10 +68,31 @@ const PaiementEchec = () => {
           </button>
         </div>
 
+        {/* Illustration */}
+        <div className="flex justify-center py-2">
+          <img src={supportImg} alt="Support" className="w-40 h-40 object-contain opacity-80" />
+        </div>
+
         {/* Support */}
-        <p className="text-xs text-muted-foreground">
-          Besoin d'aide ? Contactez-nous par WhatsApp ou email.
-        </p>
+        <div className="space-y-4 pt-4 border-t border-border/50">
+          <p className="text-xs text-muted-foreground italic">
+            "Une petite erreur n'est pas la fin du monde. Nos techniciens sont là pour vous aider."
+          </p>
+          <div className="flex flex-col sm:flex-row gap-3">
+            <a 
+              href="https://wa.me/25712345678" 
+              target="_blank" 
+              className="flex-1 py-3 px-4 rounded-xl bg-[#25D366]/10 border border-[#25D366]/30 text-[#25D366] text-xs font-bold flex items-center justify-center gap-2 hover:bg-[#25D366]/20 transition-all"
+            >
+              <MessageCircle className="w-4 h-4" />
+              AIDE WHATSAPP
+            </a>
+            <div className="flex-1 py-3 px-4 rounded-xl bg-primary/10 border border-primary/30 text-primary text-xs font-bold flex items-center justify-center gap-2">
+              <AlertTriangle className="w-4 h-4" />
+              SUPPORT 24/7
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   );

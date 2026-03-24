@@ -1,5 +1,5 @@
 import { useConfig } from "@/context/ConfigContext";
-import heroBg from "@/assets/hero-bg.jpg";
+import heroBg from "@/assets/hero_premium.png";
 import CountdownTimer from "@/components/CountdownTimer";
 import PricingCard from "@/components/PricingCard";
 import FeatureCard from "@/components/FeatureCard";
@@ -69,7 +69,7 @@ const Index = () => {
       checkStatus();
       return () => clearInterval(interval);
     }
-  }, [toast]);
+  }, [toast, config.success_toast_title, config.success_toast_subtitle, config.error_toast_title, config.error_toast_subtitle]);
 
   if (loading) {
     return (
@@ -127,10 +127,10 @@ const Index = () => {
         <div className="max-w-4xl mx-auto">
           <div className="text-center mb-12 space-y-4">
             <h2 className="font-display text-3xl font-bold tracking-tight text-foreground uppercase">
-              {config.videoTitle}
+              🎬 {config.videoTitle || "PRÉSENTATION VIDÉO"}
             </h2>
             <p className="text-muted-foreground max-w-2xl mx-auto">
-              {config.videoDescription}
+              {config.videoDescription || "Découvrez comment Kaspersky protège votre vie numérique en moins de 2 minutes."}
             </p>
           </div>
 
@@ -138,12 +138,55 @@ const Index = () => {
             <div className="aspect-video">
               <iframe
                 className="w-full h-full"
-                src={config.videoUrl}
+                src={config.videoUrl || "https://www.youtube.com/embed/dQw4w9WgXcQ"}
                 title={config.videoTitle}
                 allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                 allowFullScreen
               ></iframe>
             </div>
+          </div>
+        </div>
+      </section>
+
+      {/* How it Works Section */}
+      <section className="py-24 px-4 bg-background relative border-y border-border/50">
+        <div className="max-w-5xl mx-auto">
+          <div className="text-center mb-16">
+            <h2 className="font-display text-3xl sm:text-4xl font-black mb-4 uppercase tracking-tight">
+              COMMENT <span className="text-primary">ACHETER</span> ?
+            </h2>
+            <p className="text-muted-foreground">Une procédure simple, rapide et 100% sécurisée.</p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-12 relative">
+            {/* Step 1 */}
+            <div className="flex flex-col items-center text-center space-y-4 group">
+              <div className="w-16 h-16 rounded-2xl bg-primary/10 border border-primary/20 flex items-center justify-center text-primary font-black text-2xl group-hover:bg-primary group-hover:text-black transition-all duration-500 shadow-lg shadow-primary/5">
+                01
+              </div>
+              <h3 className="font-display font-bold text-xl">CHOISISSEZ</h3>
+              <p className="text-sm text-muted-foreground">Entrez votre email et cliquez sur le bouton de paiement.</p>
+            </div>
+
+            {/* Step 2 */}
+            <div className="flex flex-col items-center text-center space-y-4 group">
+              <div className="w-16 h-16 rounded-2xl bg-cyber-orange/10 border border-cyber-orange/20 flex items-center justify-center text-cyber-orange font-black text-2xl group-hover:bg-cyber-orange group-hover:text-black transition-all duration-500 shadow-lg shadow-cyber-orange/5">
+                02
+              </div>
+              <h3 className="font-display font-bold text-xl">VALIDEZ</h3>
+              <p className="text-sm text-muted-foreground">Confirmez la transaction par USSD sur votre téléphone mobile.</p>
+            </div>
+
+            {/* Step 3 */}
+            <div className="flex flex-col items-center text-center space-y-4 group">
+              <div className="w-16 h-16 rounded-2xl bg-cyber-green/10 border border-cyber-green/20 flex items-center justify-center text-cyber-green font-black text-2xl group-hover:bg-cyber-green group-hover:text-black transition-all duration-500 shadow-lg shadow-cyber-green/5">
+                03
+              </div>
+              <h3 className="font-display font-bold text-xl">PROTÉGEZ</h3>
+              <p className="text-sm text-muted-foreground">Recevez votre licence par email et activez votre antivirus.</p>
+            </div>
+
+            {/* Decorative arrow/line for desktop (optional but omitted for simplicity here) */}
           </div>
         </div>
       </section>

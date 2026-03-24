@@ -1,4 +1,4 @@
-import { CheckCircle, Download, ShieldCheck, Mail } from "lucide-react";
+import { CheckCircle, Download, ShieldCheck, Mail, Play } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useConfig } from "@/context/ConfigContext";
 import shieldImg from "@/assets/kaspersky-shield.png";
@@ -49,10 +49,26 @@ const PaiementSucces = () => {
           </div>
         </div>
 
+        {/* Tutorial Video Section */}
+        <div className="glass-card rounded-xl overflow-hidden border border-border/50 shadow-lg">
+          <div className="bg-secondary/20 p-3 border-b border-border/50 text-left flex items-center gap-2">
+            <Play className="w-4 h-4 text-primary" />
+            <span className="text-xs font-bold tracking-widest text-foreground uppercase">Tutoriel d'installation</span>
+          </div>
+          <div className="aspect-video">
+            <iframe
+              className="w-full h-full"
+              src={config.videoUrl || "https://www.youtube.com/embed/dQw4w9WgXcQ"}
+              title="Tutoriel d'installation Kaspersky"
+              allowFullScreen
+            ></iframe>
+          </div>
+        </div>
+
         {/* Download */}
         <div className="space-y-3">
           <a
-            href="https://www.kaspersky.com/downloads"
+            href={config.downloadUrl || "https://www.kaspersky.com/downloads"}
             target="_blank"
             rel="noopener noreferrer"
             className="cyber-button w-full py-4 rounded-lg text-sm flex items-center justify-center gap-3 block"

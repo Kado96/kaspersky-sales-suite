@@ -26,6 +26,7 @@ const App = () => (
             <Route path="/paiement/succes" element={<PaiementSucces />} />
             <Route path="/paiement/echec" element={<PaiementEchec />} />
             <Route path="/paiement/result" element={<Navigate to="/" replace />} />
+            <Route path="/paiement/resultat" element={<Navigate to="/" replace />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>
