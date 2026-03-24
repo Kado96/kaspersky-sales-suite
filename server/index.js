@@ -9,35 +9,115 @@ require('dotenv').config();
 const app = express();
 const PORT = process.env.PORT || 5001;
 
-app.use(cors({
-    origin: ['http://localhost:8080', 'http://kukasoko.wuaze.com', 'https://kukasoko.wuaze.com'],
-    methods: ['GET', 'POST'],
-    allowedHeaders: ['Content-Type', 'Authorization']
-}));
+app.use((req, res, next) => {
+    res.header('Access-Control-Allow-Origin', '*');
+    res.header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS, PUT, DELETE');
+    res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization');
+    if (req.method === 'OPTIONS') return res.sendStatus(200);
+    next();
+});
 app.use(express.json());
+
+app.get('/api/health', (req, res) => {
+    return res.status(200).json({ status: 'OK', message: 'API_IS_READY_V4' });
+});
+
+app.get('/', (req, res) => {
+    res.send('SUPER_SERVER_V4_READY');
+});
+
+// Logger de diagnostic
+app.use((req, res, next) => {
+    console.log(`[REQ] ${req.method} ${req.url} from ${req.headers.origin || 'No Origin'}`);
+    next();
+});
+
+let supabase = null;
+try {
+    supabase = require('./supabaseClient');
+    console.log("[INIT] Supabase client checked.");
+} catch (e) {
+    console.error("[CRITICAL] Failed to load Supabase client:", e.message);
+}
 
 const CONFIG_FILE = path.join(__dirname, 'config.json');
 const TRANSACTIONS_FILE = path.join(__dirname, 'transactions.json');
 
-// --- Helper Functions ---
-const readJsonFile = (filePath, defaultData = {}) => {
-    try {
-        if (fs.existsSync(filePath)) {
-            const data = fs.readFileSync(filePath, 'utf8');
-            return JSON.parse(data);
-        }
-    } catch (err) {
-        console.error(`Error reading ${filePath}:`, err);
+// --- Centralized Data Handlers (Hybrid Supabase/JSON) ---
+
+const getConfig = async () => {
+    if (supabase) {
+        const { data, error } = await supabase
+            .from('site_config')
+            .select('data')
+            .eq('name', 'main')
+            .single();
+        if (!error && data) return data.data;
     }
-    return defaultData;
+    // Fallback JSON
+    try {
+        if (fs.existsSync(CONFIG_FILE)) {
+            return JSON.parse(fs.readFileSync(CONFIG_FILE, 'utf8'));
+        }
+    } catch (e) { console.error("Error reading local config", e); }
+    return null;
 };
 
-const writeJsonFile = (filePath, data) => {
+const saveConfig = async (updatedConfig) => {
+    if (supabase) {
+        const { error } = await supabase
+            .from('site_config')
+            .upsert({ name: 'main', data: updatedConfig }, { onConflict: 'name' });
+        if (!error) return true;
+        console.error("Supabase config save error:", error);
+    }
+    // Fallback JSON
     try {
-        fs.writeFileSync(filePath, JSON.stringify(data, null, 2), 'utf8');
+        fs.writeFileSync(CONFIG_FILE, JSON.stringify(updatedConfig, null, 2), 'utf8');
         return true;
-    } catch (err) {
-        console.error(`Error writing ${filePath}:`, err);
+    } catch (e) {
+        console.error("Error saving local config", e);
+        return false;
+    }
+};
+
+const getTransactions = async () => {
+    if (supabase) {
+        const { data, error } = await supabase
+            .from('transactions')
+            .select('*')
+            .order('date', { ascending: false });
+        if (!error) return data;
+    }
+    // Fallback JSON
+    try {
+        if (fs.existsSync(TRANSACTIONS_FILE)) {
+            return JSON.parse(fs.readFileSync(TRANSACTIONS_FILE, 'utf8'));
+        }
+    } catch (e) { console.error("Error reading local transactions", e); }
+    return [];
+};
+
+const upsertTransaction = async (txn) => {
+    if (supabase) {
+        const { error } = await supabase
+            .from('transactions')
+            .upsert(txn);
+        if (!error) return true;
+    }
+    // Fallback JSON
+    try {
+        let transactions = [];
+        if (fs.existsSync(TRANSACTIONS_FILE)) {
+            transactions = JSON.parse(fs.readFileSync(TRANSACTIONS_FILE, 'utf8'));
+        }
+        const idx = transactions.findIndex(t => t.id === txn.id);
+        if (idx >= 0) transactions[idx] = { ...transactions[idx], ...txn };
+        else transactions.unshift(txn);
+        fs.writeFileSync(TRANSACTIONS_FILE, JSON.stringify(transactions, null, 2), 'utf8');
+        return true;
+    } catch (e) {
+        console.error("Error saving local transaction", e);
         return false;
     }
 };
@@ -55,40 +135,30 @@ app.get('/', (req, res) => {
 // --- Administration Routes ---
 app.post('/api/admin/login', (req, res) => {
     const { username, password } = req.body;
-    // Hardcoded credentials for now, could be in .env
     const adminUser = process.env.ADMIN_USER || 'donald';
     const adminPass = process.env.ADMIN_PASS || 'donald';
-    
     if (username === adminUser && password === adminPass) {
-        res.json({ success: true, token: 'admin_token_secure_xyz789' }); // Simple token for this MVP
+        res.json({ success: true, token: 'admin_token_secure_xyz789' });
     } else {
         res.status(401).json({ success: false, message: 'Identifiants incorrects' });
     }
 });
 
-// Middleware pour protéger les routes Admin
 const requireAdmin = (req, res, next) => {
     const token = req.headers['authorization'];
-    if (token === 'Bearer admin_token_secure_xyz789') {
-        next();
-    } else {
-        res.status(401).json({ success: false, message: 'Non autorisé' });
-    }
+    if (token === 'Bearer admin_token_secure_xyz789') next();
+    else res.status(401).json({ success: false, message: 'Non autorisé' });
 };
 
 // --- Config Routes ---
-app.get('/api/config', (req, res) => {
-    const config = readJsonFile(CONFIG_FILE, null);
-    if (!config) {
-        // Return 404 so frontend knows to use default config
-        return res.status(404).json({ message: 'No custom config found' });
-    }
+app.get('/api/config', async (req, res) => {
+    const config = await getConfig();
+    if (!config) return res.status(404).json({ message: 'No config found' });
     res.json(config);
 });
 
-app.post('/api/config', requireAdmin, (req, res) => {
-    const updatedConfig = req.body;
-    if (writeJsonFile(CONFIG_FILE, updatedConfig)) {
+app.post('/api/config', requireAdmin, async (req, res) => {
+    if (await saveConfig(req.body)) {
         res.json({ success: true, message: 'Configuration enregistrée' });
     } else {
         res.status(500).json({ success: false, message: 'Erreur lors de la sauvegarde' });
@@ -96,20 +166,15 @@ app.post('/api/config', requireAdmin, (req, res) => {
 });
 
 // --- Transactions Routes ---
-app.get('/api/transactions', requireAdmin, (req, res) => {
-    const transactions = readJsonFile(TRANSACTIONS_FILE, []);
+app.get('/api/transactions', requireAdmin, async (req, res) => {
+    const transactions = await getTransactions();
     res.json(transactions);
 });
 
-// Route Callback appelée par AfriPay (Webhook)
 app.post('/api/callback', async (req, res) => {
     const { status, amount, currency, transaction_ref, payment_method, client_token, phone, payer_phone, phone_number } = req.body;
-    
-    console.log(`[CALLBACK] Transaction ${client_token} : ${status} (Method: ${payment_method}, Phone: ${phone || payer_phone || phone_number})`);
+    console.log(`[CALLBACK] Transaction ${client_token} : ${status}`);
 
-    let transactions = readJsonFile(TRANSACTIONS_FILE, []);
-    const existingIndex = transactions.findIndex(t => t.id === client_token);
-    
     const txnUpdate = {
         id: client_token,
         status: status === 'success' ? 'success' : 'failed',
@@ -119,48 +184,31 @@ app.post('/api/callback', async (req, res) => {
         last_callback: new Date().toISOString()
     };
 
-    if (existingIndex >= 0) {
-        transactions[existingIndex] = { ...transactions[existingIndex], ...txnUpdate };
-    } else {
-        transactions.unshift(txnUpdate);
-    }
-    
-    writeJsonFile(TRANSACTIONS_FILE, transactions);
+    await upsertTransaction(txnUpdate);
 
-    // Si succès, on peut déclencher l'email immédiatement si on a l'email stocké
-    if (status === 'success' && transactions[existingIndex]?.email) {
-        console.log(`Envoi automatique de l'email à ${transactions[existingIndex].email}`);
-        sendPaymentEmail(transactions[existingIndex].email, client_token, 'success');
+    // Email logic remains similar, but using the new getConfig
+    if (status === 'success') {
+        const transactions = await getTransactions();
+        const fullTxn = transactions.find(t => t.id === client_token);
+        if (fullTxn && fullTxn.email) {
+            sendPaymentEmail(fullTxn.email, client_token, 'success');
+        }
     }
-
     res.status(200).send('OK'); 
 });
 
-app.post('/api/transactions', (req, res) => {
-    const txn = req.body;
-    let transactions = readJsonFile(TRANSACTIONS_FILE, []);
-    
-    const existingIndex = transactions.findIndex(t => t.id === txn.id);
-    if (existingIndex >= 0) {
-        transactions[existingIndex] = { ...transactions[existingIndex], ...txn };
-    } else {
-        transactions.unshift(txn);
-    }
-    
-    writeJsonFile(TRANSACTIONS_FILE, transactions);
+app.post('/api/transactions', async (req, res) => {
+    await upsertTransaction(req.body);
     res.json({ success: true });
 });
 
-// Endpoint pour vérifier le statut (utilisé par le Polling du frontend)
 app.get('/api/check-status/:transactionId', async (req, res) => {
     const { transactionId } = req.params;
 
-    // On vérifie uniquement en local car AfriPay nous notifie via le Callback
-    const transactions = readJsonFile(TRANSACTIONS_FILE, []);
+    const transactions = await getTransactions();
     const localTxn = transactions.find(t => t.id === transactionId);
 
     if (localTxn) {
-        // Mappe les status pour le frontend
         const statusMap = {
             'success': 'SUCCESS',
             'completed': 'SUCCESS',
@@ -192,7 +240,7 @@ const sendPaymentEmail = async (email, transactionId, status) => {
     }
 
     const isSuccess = status === 'success' || status === 'completed' || status === 'SUCCESS';
-    const config = readJsonFile(CONFIG_FILE, { downloadUrl: "https://drive.google.com/file/d/1jk5kbmm74K6nf9OYcs03aJ0Zd1-GCY74/view?usp=drive_link" });
+    const config = await getConfig() || { downloadUrl: "https://drive.google.com/file/d/1jk5kbmm74K6nf9OYcs03aJ0Zd1-GCY74/view?usp=drive_link" };
     const downloadUrl = config.downloadUrl;
 
     const mailOptions = {
