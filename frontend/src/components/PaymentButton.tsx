@@ -5,7 +5,7 @@ import axios from 'axios';
 import { API_URL } from '../lib/siteConfig';
 
 const FRONTEND_URL = import.meta.env.PROD 
-  ? 'http://kukasoko.wuaze.com' 
+  ? 'https://kaspersky.kesug.com' 
   : 'http://localhost:8080';
 
 const PaymentButton: React.FC = () => {
