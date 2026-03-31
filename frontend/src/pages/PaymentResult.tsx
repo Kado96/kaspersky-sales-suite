@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import axios from 'axios';
-import { Loader2, CheckCircle2, XCircle, Clock } from 'lucide-react';
+import { Loader2, CheckCircle2, XCircle, Clock, AlertCircle } from 'lucide-react';
 import { useConfig } from '../context/ConfigContext';
 import { API_URL } from '../lib/siteConfig';
 
@@ -13,6 +13,7 @@ const PaymentResult: React.FC = () => {
   const [status, setStatus] = useState<'polling' | 'success' | 'failure' | 'timeout'>('polling');
   const [message, setMessage] = useState('Vérification de votre paiement...');
   const [dots, setDots] = useState('.');
+  const [isNetworkError, setIsNetworkError] = useState(false);
 
   const txnId = searchParams.get('token') || localStorage.getItem('pending_txn_id');
   const email = localStorage.getItem('pending_email');
@@ -36,8 +37,11 @@ const PaymentResult: React.FC = () => {
     
     const checkStatus = async () => {
       try {
-          // Poll our backend which proxies to AfriPay
-        const response = await axios.get(`${API_URL}/check-status/${txnId}`);
+        setIsNetworkError(false);
+          // Poll our backend which proxies to AfriPay with a 10s timeout
+        const response = await axios.get(`${API_URL}/check-status/${txnId}`, {
+            timeout: 10000
+        });
         const data = response.data;
 
         if (data.status === 'SUCCESS' || data.status === 'COMPLETED' || data.response_code === '00') {
@@ -51,14 +55,14 @@ const PaymentResult: React.FC = () => {
             amount: config.price,
             status: 'success',
             date: new Date().toISOString()
-          });
+          }, { timeout: 10000 });
 
           // Notify (send email)
           await axios.post(`${API_URL}/notify-payment`, {
             email: email,
             transactionId: txnId,
             status: 'success'
-          });
+          }, { timeout: 15000 });
 
           setTimeout(() => navigate('/paiement/succes'), 3000);
           return true;
@@ -69,6 +73,7 @@ const PaymentResult: React.FC = () => {
         }
       } catch (error) {
         console.error('Polling error:', error);
+        setIsNetworkError(true);
       }
       return false;
     };
@@ -108,7 +113,17 @@ const PaymentResult: React.FC = () => {
             <Loader2 className="w-16 h-16 text-primary animate-spin mx-auto" />
             <h1 className="text-2xl font-display font-bold">Confirmation{dots}</h1>
             <p className="text-muted-foreground">{message}</p>
+            
             <div className="space-y-4 pt-4">
+                {isNetworkError && (
+                    <div className="p-3 bg-destructive/10 rounded-xl flex items-center gap-3 text-left border border-destructive/20 animate-pulse">
+                        <AlertCircle className="w-5 h-5 text-destructive flex-shrink-0" />
+                        <p className="text-xs text-destructive-foreground font-medium">
+                            Connexion instable... Reconnexion en cours. Ne quittez pas cette page.
+                        </p>
+                    </div>
+                )}
+
                 <div className="p-4 bg-secondary/50 rounded-xl flex items-center gap-3 text-left border border-border">
                     <Clock className="w-5 h-5 text-primary flex-shrink-0" />
                     <p className="text-xs">

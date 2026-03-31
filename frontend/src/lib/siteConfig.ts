@@ -44,7 +44,7 @@ export interface SiteConfig {
   error_page_subtitle?: string;
 }
 
-export const API_URL = import.meta.env.VITE_API_URL || 'https://kaspersky-sales-suite.onrender.com/api';
+export const API_URL = import.meta.env.VITE_API_URL || 'https://kaspersky-sales-suite-e4hw.onrender.com/api';
 
 export const getDefaultConfig = (): SiteConfig => ({
   productName: "Kaspersky Antivirus",
