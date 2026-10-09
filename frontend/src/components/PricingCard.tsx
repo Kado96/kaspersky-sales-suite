@@ -39,7 +39,7 @@ const PricingCard = ({ config }: PricingCardProps) => {
 
       {/* Features */}
       <div className="space-y-3 mb-6">
-        {config.features.map((feat, i) => (
+        {(config.features || []).map((feat, i) => (
           <div key={i} className="flex items-center gap-3">
             <CheckCircle className="w-5 h-5 text-cyber-green flex-shrink-0" />
             <span className="text-sm text-foreground">{feat}</span>

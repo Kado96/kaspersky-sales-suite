@@ -3,7 +3,7 @@
   "subtitle": "MULTI-APPAREILS",
   "heroTitle": "KASPERSKY",
   "heroSubtitle": "Un investissement pour votre tranquillité d'esprit. Protégez-vous dès aujourd'hui.",
-  "price": "1000",
+  "price": "20 000",
   "currency": "BIF",
   "paymentNote": "PAIEMENT UNIQUE · LICENCE 1 AN",
   "features": [
@@ -16,12 +16,12 @@
     "Blocage des ransomwares",
     "Support technique 24/7"
   ],
-  "videoUrl": "https://www.youtube.com/embed/qMaNQ2Nydn0",
+  "videoUrl": "https://www.youtube.com/embed/dQw4w9WgXcQ",
   "videoTitle": "TUTORIEL D'INSTALLATION",
   "videoDescription": "Suivez ce guide vidéo étape par étape pour sécuriser votre appareil en moins de 3 minutes.",
   "ctaText": "PROCÉDER AU PAIEMENT",
   "emailPlaceholder": "votre.email@exemple.com",
-  "countdownEndDate": "2026-12-31T23:59:59.000Z",
+  "countdownEndDate": "2026-10-12T16:09:18.886Z",
   "whyChooseTitle": "POURQUOI CHOISIR",
   "whyChooseSubtitle": "Une suite complète de sécurité pour protéger tous les aspects de votre vie numérique.",
   "benefitCards": [
@@ -56,8 +56,28 @@
       "description": "Assistance technique disponible à tout moment pour vous aider."
     }
   ],
-  "footerText": "© 2026 · Revendeur agréé Kaspersky. Tous droits réservés.",
+  "testimonials": [
+    {
+      "name": "Jean-Pierre B.",
+      "role": "PME Informatique",
+      "content": "Depuis que j'utilise cette licence, je n'ai plus aucun problème de virus sur mes machines de bureau. Livraison instantanée !",
+      "rating": 5
+    },
+    {
+      "name": "Marie N.",
+      "role": "Particulier",
+      "content": "Très satisfaite du service. Le tutoriel est très clair et l'installation s'est faite en 2 minutes.",
+      "rating": 5
+    },
+    {
+      "name": "Sylvain K.",
+      "role": "Consultant",
+      "content": "Meilleur prix pour Kaspersky au Burundi. Le support m'a aidé rapidement pour l'activation.",
+      "rating": 4
+    }
+  ],
   "footerTitle": "KASPERSKY.",
+  "footerText": "© 2026 · Revendeur agréé Kaspersky. Tous droits réservés.",
   "trustBadge1": "🔒 SÉCURISÉ DE BOUT EN BOUT",
   "trustBadge2": "✅ Vérifié et Partenaire Officiel",
   "primaryHue": "160",
@@ -69,51 +89,13 @@
   "error_toast_title": "Paiement échoué",
   "error_toast_subtitle": "La transaction a été annulée ou a échoué.",
   "success_page_title": "Paiement RÉUSSI !",
-  "success_page_subtitle": "Votre licence Kaspersky a été activée avec succès.",
+  "success_page_subtitle": "Votre licence {productName} a été activée avec succès.",
+  "success_page_steps": [
+    "Téléchargez le fichier d'installation",
+    "Ouvrez le fichier et suivez les instructions",
+    "Entrez votre clé de licence (envoyée par email)",
+    "Profitez de votre protection complète !"
+  ],
   "error_page_title": "Paiement ÉCHOUÉ !",
-  "error_page_subtitle": "La transaction n'a pas pu être complétée. Aucun montant n'a été débité.",
-  "testimonials": [
-    {
-      "name": "Nouveau Client",
-      "role": "Particulier",
-      "content": "Avis à remplir",
-      "rating": 5
-    },
-    {
-      "name": "Nouveau Client",
-      "role": "Particulier",
-      "content": "Avis à remplir",
-      "rating": 5
-    },
-    {
-      "name": "Nouveau Client",
-      "role": "Particulier",
-      "content": "Avis à remplir",
-      "rating": 5
-    },
-    {
-      "name": "Nouveau Client",
-      "role": "Particulier",
-      "content": "Avis à remplir",
-      "rating": 5
-    },
-    {
-      "name": "Nouveau Client",
-      "role": "Particulier",
-      "content": "Avis à remplir",
-      "rating": 5
-    },
-    {
-      "name": "Nouveau Client",
-      "role": "Particulier",
-      "content": "Avis à remplir",
-      "rating": 5
-    },
-    {
-      "name": "Nouveau Client",
-      "role": "Particulier",
-      "content": "Avis à remplir",
-      "rating": 5
-    }
-  ]
+  "error_page_subtitle": "La transaction n'a pas pu être complétée. Aucun montant n'a été débité."
 }

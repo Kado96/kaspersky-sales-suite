@@ -26,7 +26,7 @@ const Index = () => {
       
       const checkStatus = async () => {
         try {
-          const res = await axios.get(`${API_URL}/check-status/${txnId}`);
+          const res = await axios.get(`${API_URL}/payment/${txnId}/status`);
           const data = res.data;
 
           if (data.status === 'SUCCESS' || data.status === 'COMPLETED' || data.response_code === '00') {
@@ -206,7 +206,7 @@ const Index = () => {
             {config.whyChooseSubtitle}
           </p>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {config.benefitCards.map((card, i) => (
+            {(config.benefitCards || []).map((card, i) => (
               <FeatureCard key={i} {...card} />
             ))}
           </div>

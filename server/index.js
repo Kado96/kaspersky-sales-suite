@@ -6,6 +6,8 @@ const fs = require('fs');
 const path = require('path');
 require('dotenv').config();
 
+const { AfriPayAdapter, PaymentService, WebhookService } = require('./src/modules/payment');
+
 const app = express();
 const PORT = process.env.PORT || 5001;
 
@@ -18,18 +20,18 @@ app.use((req, res, next) => {
 });
 app.use(express.json());
 
+// Logger simple & diagnostic
+app.use((req, res, next) => {
+    console.log(`[${new Date().toLocaleTimeString()}] [REQ] ${req.method} ${req.url} from ${req.headers.origin || 'No Origin'}`);
+    next();
+});
+
 app.get('/api/health', (req, res) => {
     return res.status(200).json({ status: 'OK', message: 'API_IS_READY_V4' });
 });
 
 app.get('/', (req, res) => {
-    res.send('SUPER_SERVER_V4_READY');
-});
-
-// Logger de diagnostic
-app.use((req, res, next) => {
-    console.log(`[REQ] ${req.method} ${req.url} from ${req.headers.origin || 'No Origin'}`);
-    next();
+    res.status(200).send('Proxy Backend Kaspersky : OK');
 });
 
 let supabase = null;
@@ -45,6 +47,18 @@ const TRANSACTIONS_FILE = path.join(__dirname, 'transactions.json');
 
 // --- Centralized Data Handlers (Hybrid Supabase/JSON) ---
 
+const isKasperskyConfig = (cfg) =>
+    cfg && typeof cfg === 'object' && (cfg.heroTitle || cfg.productName || Array.isArray(cfg.benefitCards));
+
+const readLocalConfig = () => {
+    try {
+        if (fs.existsSync(CONFIG_FILE)) {
+            return JSON.parse(fs.readFileSync(CONFIG_FILE, 'utf8'));
+        }
+    } catch (e) { console.error("Error reading local config", e); }
+    return null;
+};
+
 const getConfig = async () => {
     if (supabase) {
         const { data, error } = await supabase
@@ -52,15 +66,12 @@ const getConfig = async () => {
             .select('data')
             .eq('name', 'main')
             .single();
-        if (!error && data) return data.data;
-    }
-    // Fallback JSON
-    try {
-        if (fs.existsSync(CONFIG_FILE)) {
-            return JSON.parse(fs.readFileSync(CONFIG_FILE, 'utf8'));
+        if (!error && data && isKasperskyConfig(data.data)) return data.data;
+        if (!error && data && !isKasperskyConfig(data.data)) {
+            console.warn('[CONFIG] Supabase payload is not Kaspersky-shaped; falling back to config.json');
         }
-    } catch (e) { console.error("Error reading local config", e); }
-    return null;
+    }
+    return readLocalConfig();
 };
 
 const saveConfig = async (updatedConfig) => {
@@ -121,108 +132,6 @@ const upsertTransaction = async (txn) => {
         return false;
     }
 };
-
-// Logger simple
-app.use((req, res, next) => {
-    console.log(`[${new Date().toLocaleTimeString()}] ${req.method} ${req.url}`);
-    next();
-});
-
-app.get('/', (req, res) => {
-    res.status(200).send('Proxy Backend Kaspersky : OK');
-});
-
-// --- Administration Routes ---
-app.post('/api/admin/login', (req, res) => {
-    const { username, password } = req.body;
-    const adminUser = process.env.ADMIN_USER || 'donald';
-    const adminPass = process.env.ADMIN_PASS || 'donald';
-    if (username === adminUser && password === adminPass) {
-        res.json({ success: true, token: 'admin_token_secure_xyz789' });
-    } else {
-        res.status(401).json({ success: false, message: 'Identifiants incorrects' });
-    }
-});
-
-const requireAdmin = (req, res, next) => {
-    const token = req.headers['authorization'];
-    if (token === 'Bearer admin_token_secure_xyz789') next();
-    else res.status(401).json({ success: false, message: 'Non autorisé' });
-};
-
-// --- Config Routes ---
-app.get('/api/config', async (req, res) => {
-    const config = await getConfig();
-    if (!config) return res.status(404).json({ message: 'No config found' });
-    res.json(config);
-});
-
-app.post('/api/config', requireAdmin, async (req, res) => {
-    if (await saveConfig(req.body)) {
-        res.json({ success: true, message: 'Configuration enregistrée' });
-    } else {
-        res.status(500).json({ success: false, message: 'Erreur lors de la sauvegarde' });
-    }
-});
-
-// --- Transactions Routes ---
-app.get('/api/transactions', requireAdmin, async (req, res) => {
-    const transactions = await getTransactions();
-    res.json(transactions);
-});
-
-app.post('/api/callback', async (req, res) => {
-    const { status, amount, currency, transaction_ref, payment_method, client_token, phone, payer_phone, phone_number } = req.body;
-    console.log(`[CALLBACK] Transaction ${client_token} : ${status}`);
-
-    const txnUpdate = {
-        id: client_token,
-        status: status === 'success' ? 'success' : 'failed',
-        transaction_ref,
-        payment_method, 
-        phone: phone || payer_phone || phone_number,
-        last_callback: new Date().toISOString()
-    };
-
-    await upsertTransaction(txnUpdate);
-
-    // Email logic remains similar, but using the new getConfig
-    if (status === 'success') {
-        const transactions = await getTransactions();
-        const fullTxn = transactions.find(t => t.id === client_token);
-        if (fullTxn && fullTxn.email) {
-            sendPaymentEmail(fullTxn.email, client_token, 'success');
-        }
-    }
-    res.status(200).send('OK'); 
-});
-
-app.post('/api/transactions', async (req, res) => {
-    await upsertTransaction(req.body);
-    res.json({ success: true });
-});
-
-app.get('/api/check-status/:transactionId', async (req, res) => {
-    const { transactionId } = req.params;
-
-    const transactions = await getTransactions();
-    const localTxn = transactions.find(t => t.id === transactionId);
-
-    if (localTxn) {
-        const statusMap = {
-            'success': 'SUCCESS',
-            'completed': 'SUCCESS',
-            'failed': 'FAILED',
-            'pending': 'PENDING'
-        };
-        return res.json({ 
-            status: statusMap[localTxn.status] || localTxn.status.toUpperCase(), 
-            transaction: localTxn 
-        });
-    }
-
-    res.json({ status: 'PENDING', message: 'Transaction not found yet' });
-});
 
 // --- System mailer ---
 const transporter = nodemailer.createTransport({
@@ -298,6 +207,161 @@ const sendPaymentEmail = async (email, transactionId, status) => {
     }
 };
 
+// --- Universal Payment Engine Initialization ---
+const paymentRepository = {
+    saveTransaction: async (txn) => {
+        return await upsertTransaction(txn);
+    },
+    getTransaction: async (transactionId) => {
+        const transactions = await getTransactions();
+        return transactions.find(t => t.id === transactionId) || null;
+    },
+    updateTransaction: async (transactionId, data) => {
+        return await upsertTransaction({ id: transactionId, ...data });
+    },
+    isProcessed: async (transactionId) => {
+        const transactions = await getTransactions();
+        const txn = transactions.find(t => t.id === transactionId);
+        return Boolean(txn && (txn.status === 'success' || txn.processed === true));
+    }
+};
+
+const afripayAdapter = new AfriPayAdapter({
+    appId: process.env.AFRIPAY_APP_ID,
+    appSecret: process.env.AFRIPAY_APP_SECRET,
+    checkoutUrl: process.env.AFRIPAY_CHECKOUT_URL,
+    defaultFrontendUrl: process.env.FRONTEND_URL || 'https://kaspersky.kesug.com'
+});
+
+const paymentService = new PaymentService(afripayAdapter, paymentRepository);
+const webhookService = new WebhookService(afripayAdapter, paymentRepository, sendPaymentEmail);
+
+// --- New Universal Payment API Routes ---
+
+// 1. POST /api/payment/initiate
+app.post('/api/payment/initiate', async (req, res) => {
+    try {
+        const { email, amount, currency, comment, customerName, phone, mode, items, metadata, returnUrl, cancelUrl, backUrl } = req.body;
+
+        let finalAmount = amount;
+        let finalCurrency = currency || 'BIF';
+
+        if (!finalAmount) {
+            const config = await getConfig();
+            finalAmount = config ? config.price : '20000';
+            finalCurrency = (config && config.currency) || finalCurrency;
+        }
+
+        const result = await paymentService.initiate({
+            email,
+            amount: finalAmount,
+            currency: finalCurrency,
+            comment: comment || `Achat Kaspersky - ${email}`,
+            customerName,
+            phone,
+            mode: mode || 'single_product',
+            items,
+            metadata,
+            returnUrl,
+            cancelUrl,
+            backUrl
+        });
+
+        if (result.success) {
+            return res.status(200).json(result);
+        } else {
+            return res.status(400).json(result);
+        }
+    } catch (err) {
+        console.error('[ERROR] /api/payment/initiate:', err);
+        return res.status(500).json({ success: false, error: err.message || 'Erreur lors de l’initiation du paiement' });
+    }
+});
+
+// 2. POST /api/payment/webhook/afripay
+app.post('/api/payment/webhook/afripay', async (req, res) => {
+    try {
+        console.log('[WEBHOOK] AfriPay notification reçue:', req.body);
+        const result = await webhookService.handleWebhook(req.body);
+        return res.status(200).json(result);
+    } catch (err) {
+        console.error('[ERROR] /api/payment/webhook/afripay:', err);
+        return res.status(500).json({ success: false, error: err.message });
+    }
+});
+
+// 3. GET /api/payment/:clientToken/status
+app.get('/api/payment/:clientToken/status', async (req, res) => {
+    try {
+        const { clientToken } = req.params;
+        const result = await paymentService.getStatus(clientToken);
+        return res.status(200).json(result);
+    } catch (err) {
+        console.error('[ERROR] /api/payment/:clientToken/status:', err);
+        return res.status(500).json({ status: 'PENDING', error: err.message });
+    }
+});
+
+// --- Administration Routes ---
+app.post('/api/admin/login', (req, res) => {
+    const { username, password } = req.body;
+    const adminUser = process.env.ADMIN_USER || 'donald';
+    const adminPass = process.env.ADMIN_PASS || 'donald';
+    if (username === adminUser && password === adminPass) {
+        res.json({ success: true, token: 'admin_token_secure_xyz789' });
+    } else {
+        res.status(401).json({ success: false, message: 'Identifiants incorrects' });
+    }
+});
+
+const requireAdmin = (req, res, next) => {
+    const token = req.headers['authorization'];
+    if (token === 'Bearer admin_token_secure_xyz789') next();
+    else res.status(401).json({ success: false, message: 'Non autorisé' });
+};
+
+// --- Config Routes ---
+app.get('/api/config', async (req, res) => {
+    const config = await getConfig();
+    if (!config) return res.status(404).json({ message: 'No config found' });
+    res.json(config);
+});
+
+app.post('/api/config', requireAdmin, async (req, res) => {
+    if (await saveConfig(req.body)) {
+        res.json({ success: true, message: 'Configuration enregistrée' });
+    } else {
+        res.status(500).json({ success: false, message: 'Erreur lors de la sauvegarde' });
+    }
+});
+
+// --- Transactions Routes ---
+app.get('/api/transactions', requireAdmin, async (req, res) => {
+    const transactions = await getTransactions();
+    res.json(transactions);
+});
+
+app.post('/api/transactions', async (req, res) => {
+    await upsertTransaction(req.body);
+    res.json({ success: true });
+});
+
+// --- Backwards Compatibility Routes ---
+app.post('/api/callback', async (req, res) => {
+    console.log(`[CALLBACK LEGACY] Notification reçue:`, req.body);
+    await webhookService.handleWebhook(req.body);
+    res.status(200).send('OK'); 
+});
+
+app.get('/api/check-status/:transactionId', async (req, res) => {
+    const { transactionId } = req.params;
+    const result = await paymentService.getStatus(transactionId);
+    return res.json({ 
+        status: result.status, 
+        transaction: result.metadata || null 
+    });
+});
+
 app.post('/api/notify-payment', async (req, res) => {
     const { email, transactionId, status } = req.body;
     const result = await sendPaymentEmail(email, transactionId, status);
@@ -309,5 +373,5 @@ app.post('/api/notify-payment', async (req, res) => {
 });
 
 app.listen(PORT, '0.0.0.0', () => {
-    console.log(`Backend proxy running on http://localhost:${PORT}`);
+    console.log(`Backend server running on http://localhost:${PORT}`);
 });

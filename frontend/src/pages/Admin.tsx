@@ -196,7 +196,7 @@ const Admin = () => {
 
           {activeTab === "content" && (
             <Section title="Configuration des Cartes">
-                {config.benefitCards.map((card, i) => (
+                {(config.benefitCards || []).map((card, i) => (
                     <div key={i} className="glass-card rounded-lg p-4 space-y-3 border border-border/50">
                         <Field label={`Titre Carte ${i+1}`} value={card.title} onChange={(v) => {
                             const newCards = [...config.benefitCards];

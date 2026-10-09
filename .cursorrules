@@ -1,0 +1,25 @@
+﻿# Jarvis — Code Knowledge Base Rules
+# ================================================================
+
+## REGLE N1 — KB-First (OBLIGATOIRE)
+
+Avant de creer toute nouvelle fonction, classe, composant ou hook :
+1. Chercher dans : E:\Application\jarvis-starter-kit\knowledge-base\KNOWLEDGE.md
+2. Commande : python E:\Application\jarvis-starter-kit\scripts\kb-search.py <terme>
+3. Si trouve : montrer le resultat et demander si on reutilise ou adapte
+4. Si non trouve : creer normalement (indexe automatiquement par le watcher)
+
+Ordre de priorite : KB locale → Projet actif → Docs officielles → GitHub (dernier recours)
+
+## REGLE N2 — Stack
+
+Frontend : React + Vite + TypeScript + Tailwind + shadcn/ui
+Backend  : FastAPI (Python) ou Django REST, Node.js + Express
+DB       : Supabase (PostgreSQL) prod / SQLite local
+Hosting  : Render
+Paiement : Afripay + mobile money (marche burundais)
+
+## REGLE N3 — Contexte
+
+Marche burundais : FR/EN/Kirundi, paiement mobile money, geo Bujumbura + provinces.
+Communication en francais, tutoiement avec Donald.

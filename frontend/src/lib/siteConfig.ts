@@ -51,7 +51,7 @@ export const getDefaultConfig = (): SiteConfig => ({
   subtitle: "MULTI-APPAREILS",
   heroTitle: "KASPERSKY",
   heroSubtitle: "Un investissement pour votre tranquillité d'esprit. Protégez-vous dès aujourd'hui.",
-  price: "30 000",
+  price: "20 000",
   currency: "BIF",
   paymentNote: "PAIEMENT UNIQUE · LICENCE 1 AN",
   features: [
@@ -109,13 +109,34 @@ export const getDefaultConfig = (): SiteConfig => ({
   error_page_subtitle: "La transaction n'a pas pu être complétée. Aucun montant n'a été débité."
 });
 
+function isKasperskyConfig(data: unknown): data is Partial<SiteConfig> {
+  if (!data || typeof data !== 'object') return false;
+  const c = data as Record<string, unknown>;
+  // Reject foreign payloads (e.g. another app sharing the same API port)
+  return typeof c.heroTitle === 'string' || typeof c.productName === 'string' || Array.isArray(c.benefitCards);
+}
+
 export async function fetchSiteConfig(): Promise<SiteConfig> {
+  const defaults = getDefaultConfig();
   try {
     const response = await fetch(`${API_URL}/config`);
     if (!response.ok) throw new Error('No config');
-    return response.json();
+    const data = await response.json();
+    if (!isKasperskyConfig(data)) {
+      console.warn('API /config returned an unexpected shape; using defaults');
+      return defaults;
+    }
+    // Merge so older API payloads missing new fields (e.g. benefitCards) stay safe
+    return {
+      ...defaults,
+      ...data,
+      features: data.features ?? defaults.features,
+      benefitCards: data.benefitCards ?? defaults.benefitCards,
+      testimonials: data.testimonials ?? defaults.testimonials,
+      success_page_steps: data.success_page_steps ?? defaults.success_page_steps,
+    };
   } catch (e) {
-    return getDefaultConfig();
+    return defaults;
   }
 }
 

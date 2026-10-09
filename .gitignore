@@ -6,3 +6,6 @@ dist
 .vscode
 build
 .cache
+Email.txt
+server/.env
+server/.env.production

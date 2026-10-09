@@ -27,7 +27,7 @@ const Paiement = () => {
         const txnId = localStorage.getItem('pending_txn_id');
         if (!txnId) return;
 
-        const res = await fetch(`${API_URL}/check-status/${txnId}`);
+        const res = await fetch(`${API_URL}/payment/${txnId}/status`);
         const data = await res.json();
         if (data.status === "SUCCESS" || data.status === "COMPLETED" || data.response_code === "00") {
           navigate("/paiement/succes");
