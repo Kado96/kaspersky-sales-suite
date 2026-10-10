@@ -36,28 +36,28 @@ let memoryConfig = {
 
 const memoryTransactions = {};
 
-// Health Check
-app.get('/api/health', (req, res) => {
+// Health Check (Handles both /api/health and /health)
+app.get(['/api/health', '/health'], (req, res) => {
   res.json({ status: 'ok', message: 'Kaspersky Sales Suite API is active on Vercel' });
 });
 
-// GET /api/config
-app.get('/api/config', (req, res) => {
+// GET /api/config & GET /config
+app.get(['/api/config', '/config'], (req, res) => {
   res.json(memoryConfig);
 });
 
-// POST /api/config
-app.post('/api/config', (req, res) => {
+// POST /api/config & POST /config
+app.post(['/api/config', '/config'], (req, res) => {
   try {
     memoryConfig = { ...memoryConfig, ...req.body };
-    res.json({ success: true, message: 'Configuration mis à jour avec succès' });
+    res.json({ success: true, message: 'Configuration mise à jour avec succès' });
   } catch (error) {
     res.status(500).json({ error: 'Échec de mise à jour' });
   }
 });
 
-// POST /api/payment/initiate
-app.post('/api/payment/initiate', async (req, res) => {
+// POST /api/payment/initiate & POST /payment/initiate
+app.post(['/api/payment/initiate', '/payment/initiate'], async (req, res) => {
   try {
     const { email, amount, currency, comment, returnUrl, cancelUrl, backUrl } = req.body;
     const clientToken = `TXN_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
@@ -92,7 +92,7 @@ app.post('/api/payment/initiate', async (req, res) => {
   }
 });
 
-// POST /api/payment/webhook/afripay & POST /api/payments/afripay/callback
+// POST Webhooks
 const handleAfriPayCallback = (req, res) => {
   try {
     const { status, amount, currency, transaction_ref, payment_method, client_token } = req.body;
@@ -109,16 +109,20 @@ const handleAfriPayCallback = (req, res) => {
   }
 };
 
-app.post('/api/payment/webhook/afripay', handleAfriPayCallback);
-app.post('/api/payments/afripay/callback', handleAfriPayCallback);
+app.post(['/api/payment/webhook/afripay', '/payment/webhook/afripay', '/api/payments/afripay/callback', '/payments/afripay/callback'], handleAfriPayCallback);
 
-// GET /api/payment/:clientToken/status
-app.get('/api/payment/:clientToken/status', (req, res) => {
+// GET /api/payment/:clientToken/status & GET /payment/:clientToken/status
+app.get(['/api/payment/:clientToken/status', '/payment/:clientToken/status'], (req, res) => {
   const txn = memoryTransactions[req.params.clientToken];
   if (txn) {
     return res.status(200).json(txn);
   }
   return res.status(200).json({ status: "PENDING" });
+});
+
+// Fallback 404 route for debugging unexpected requests
+app.use((req, res) => {
+  res.status(404).json({ error: `Route non trouvée: ${req.method} ${req.url}` });
 });
 
 module.exports = app;
