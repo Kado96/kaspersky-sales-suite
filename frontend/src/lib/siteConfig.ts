@@ -118,36 +118,52 @@ function isKasperskyConfig(data: unknown): data is Partial<SiteConfig> {
 
 export async function fetchSiteConfig(): Promise<SiteConfig> {
   const defaults = getDefaultConfig();
+  let localSaved: Partial<SiteConfig> = {};
+  try {
+    const raw = localStorage.getItem('kaspersky_site_config');
+    if (raw) localSaved = JSON.parse(raw);
+  } catch (e) {}
+
   try {
     const response = await fetch(`${API_URL}/config`);
-    if (!response.ok) throw new Error('No config');
-    const data = await response.json();
-    if (!isKasperskyConfig(data)) {
-      console.warn('API /config returned an unexpected shape; using defaults');
-      return defaults;
+    if (response.ok) {
+      const data = await response.json();
+      if (isKasperskyConfig(data)) {
+        return {
+          ...defaults,
+          ...localSaved,
+          ...data,
+          features: data.features ?? defaults.features,
+          benefitCards: data.benefitCards ?? defaults.benefitCards,
+          testimonials: data.testimonials ?? defaults.testimonials,
+          success_page_steps: data.success_page_steps ?? defaults.success_page_steps,
+        };
+      }
     }
-    // Merge so older API payloads missing new fields (e.g. benefitCards) stay safe
-    return {
-      ...defaults,
-      ...data,
-      features: data.features ?? defaults.features,
-      benefitCards: data.benefitCards ?? defaults.benefitCards,
-      testimonials: data.testimonials ?? defaults.testimonials,
-      success_page_steps: data.success_page_steps ?? defaults.success_page_steps,
-    };
   } catch (e) {
-    return defaults;
+    // Backend offline or in dev, use fallback
   }
+  return { ...defaults, ...localSaved };
 }
 
 export async function updateSiteConfig(config: SiteConfig, token: string): Promise<void> {
-  const response = await fetch(`${API_URL}/config`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${token}`
-    },
-    body: JSON.stringify(config),
-  });
-  if (!response.ok) throw new Error('Failed to update config');
+  try {
+    localStorage.setItem('kaspersky_site_config', JSON.stringify(config));
+  } catch (e) {}
+
+  try {
+    const response = await fetch(`${API_URL}/config`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
+      body: JSON.stringify(config),
+    });
+    if (!response.ok) {
+      console.warn(`Configuration sauvegardée localement (API code: ${response.status})`);
+    }
+  } catch (err) {
+    console.warn('Backend non disponible; configuration sauvegardée dans le stockage local.', err);
+  }
 }
