@@ -28,11 +28,13 @@ let memoryConfig = {
 
 const memoryTransactions = {};
 
-// AfriPay credentials (stored server-side only — NEVER exposed to frontend)
-const AFRIPAY_APP_ID = process.env.AFRIPAY_APP_ID || '5b47c080a61d5652c3696cbdf2f8a8cd';
-const AFRIPAY_APP_SECRET = process.env.AFRIPAY_APP_SECRET || 'JDJ5JDEwJHNPRHp3';
+// AfriPay credentials — chargées UNIQUEMENT depuis les variables d'environnement Vercel
+// ⚠️ Ne jamais mettre de valeurs en dur ici. Configurez-les dans le tableau de bord Vercel.
+const AFRIPAY_APP_ID = process.env.AFRIPAY_APP_ID || '';
+const AFRIPAY_APP_SECRET = process.env.AFRIPAY_APP_SECRET || '';
 const AFRIPAY_CHECKOUT_URL = process.env.AFRIPAY_CHECKOUT_URL || 'https://www.afripay.africa/checkout/index.php';
 const FRONTEND_URL = (process.env.FRONTEND_URL || 'https://kaspersky-sales-suite.vercel.app').replace(/\/+$/, '');
+
 
 module.exports = async (req, res) => {
   // CORS Headers
