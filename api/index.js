@@ -1,4 +1,4 @@
-// Native Vercel Serverless Function - Zero external dependencies, ultra-fast & bulletproof
+// Native Vercel Serverless Function - Zero dependencies, ultra-fast & bulletproof
 let memoryConfig = {
   productName: "Kaspersky Antivirus",
   subtitle: "MULTI-APPAREILS",
@@ -28,6 +28,12 @@ let memoryConfig = {
 
 const memoryTransactions = {};
 
+// AfriPay credentials (stored server-side only — NEVER exposed to frontend)
+const AFRIPAY_APP_ID = process.env.AFRIPAY_APP_ID || '5b47c080a61d5652c3696cbdf2f8a8cd';
+const AFRIPAY_APP_SECRET = process.env.AFRIPAY_APP_SECRET || 'JDJ5JDEwJHNPRHp3';
+const AFRIPAY_CHECKOUT_URL = process.env.AFRIPAY_CHECKOUT_URL || 'https://www.afripay.africa/checkout/index.php';
+const FRONTEND_URL = (process.env.FRONTEND_URL || 'https://kaspersky-sales-suite.vercel.app').replace(/\/+$/, '');
+
 module.exports = async (req, res) => {
   // CORS Headers
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -41,22 +47,16 @@ module.exports = async (req, res) => {
 
   const url = (req.url || '/').split('?')[0];
 
-  // Helper to parse body
+  // Parse body (JSON or form-urlencoded)
   let body = req.body;
   if (!body && (req.method === 'POST' || req.method === 'PUT')) {
     try {
       const buffers = [];
-      for await (const chunk of req) {
-        buffers.push(chunk);
-      }
+      for await (const chunk of req) buffers.push(chunk);
       const raw = Buffer.concat(buffers).toString();
       if (raw) {
-        try {
-          body = JSON.parse(raw);
-        } catch {
-          const params = new URLSearchParams(raw);
-          body = Object.fromEntries(params);
-        }
+        try { body = JSON.parse(raw); }
+        catch { const p = new URLSearchParams(raw); body = Object.fromEntries(p); }
       }
     } catch (e) {}
   }
@@ -64,13 +64,13 @@ module.exports = async (req, res) => {
 
   res.setHeader('Content-Type', 'application/json');
 
-  // Health check
+  // ─── Health Check ───────────────────────────────────────────────────────────
   if (url === '/api/health' || url === '/health') {
     res.statusCode = 200;
     return res.end(JSON.stringify({ status: 'ok', message: 'Kaspersky API active on Vercel' }));
   }
 
-  // Config endpoints
+  // ─── Config ─────────────────────────────────────────────────────────────────
   if (url === '/api/config' || url === '/config') {
     if (req.method === 'GET') {
       res.statusCode = 200;
@@ -83,16 +83,20 @@ module.exports = async (req, res) => {
     }
   }
 
-  // Payment initiate
+  // ─── Payment Initiate ────────────────────────────────────────────────────────
+  // CORRECTION : ajout des champs app_id, app_secret, return_url, cancel_url, back_url
+  // requis par AfriPay (sinon → "Certains paramètres obligatoires sont manquants !")
   if (url === '/api/payment/initiate' || url === '/payment/initiate') {
     const { email, amount, currency, comment, returnUrl, cancelUrl, backUrl } = body;
     const clientToken = `TXN_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
+    const normalizedAmount = String(amount || 20000).replace(/\s+/g, '');
+
     memoryTransactions[clientToken] = {
       id: clientToken,
       email,
-      amount: amount || "20 000",
-      currency: currency || "BIF",
-      status: "PENDING",
+      amount: normalizedAmount,
+      currency: currency || 'BIF',
+      status: 'PENDING',
       createdAt: new Date().toISOString()
     };
 
@@ -100,41 +104,49 @@ module.exports = async (req, res) => {
     return res.end(JSON.stringify({
       success: true,
       transactionId: clientToken,
-      redirectUrl: "https://www.afripay.africa/checkout/index.php",
+      redirectUrl: AFRIPAY_CHECKOUT_URL,
       checkoutFormData: {
-        amount: String(amount || 20000).replace(/\s+/g, ''),
-        currency: currency || "BIF",
+        amount: normalizedAmount,
+        currency: currency || 'BIF',
         client_token: clientToken,
         comment: comment || `Achat Kaspersky - ${email}`,
-        return_url: returnUrl,
-        cancel_url: cancelUrl,
-        back_url: backUrl
+        return_url: returnUrl || `${FRONTEND_URL}/paiement/resultat`,
+        cancel_url: cancelUrl || `${FRONTEND_URL}/paiement/echec`,
+        back_url: backUrl || `${FRONTEND_URL}/`,
+        app_id: AFRIPAY_APP_ID,
+        app_secret: AFRIPAY_APP_SECRET,
       }
     }));
   }
 
-  // Webhook AfriPay
-  if (url === '/api/payment/webhook/afripay' || url === '/payment/webhook/afripay' || url === '/api/payments/afripay/callback' || url === '/payments/afripay/callback') {
+  // ─── Webhook AfriPay ─────────────────────────────────────────────────────────
+  const webhookRoutes = [
+    '/api/payment/webhook/afripay',
+    '/payment/webhook/afripay',
+    '/api/payments/afripay/callback',
+    '/payments/afripay/callback'
+  ];
+  if (webhookRoutes.includes(url)) {
     const { status, transaction_ref, payment_method, client_token } = body;
     if (client_token && memoryTransactions[client_token]) {
-      memoryTransactions[client_token].status = (status === 'success' || status === 'COMPLETED') ? 'SUCCESS' : 'FAILED';
+      memoryTransactions[client_token].status =
+        (status === 'success' || status === 'COMPLETED') ? 'SUCCESS' : 'FAILED';
       memoryTransactions[client_token].transactionRef = transaction_ref;
       memoryTransactions[client_token].paymentMethod = payment_method;
     }
     res.statusCode = 200;
-    return res.end(JSON.stringify({ status: "ok", message: "Callback AfriPay validé" }));
+    return res.end(JSON.stringify({ status: 'ok', message: 'Callback AfriPay validé' }));
   }
 
-  // Payment status
+  // ─── Payment Status ──────────────────────────────────────────────────────────
   const statusMatch = url.match(/^\/(?:api\/)?payment\/([^/]+)\/status$/);
   if (statusMatch) {
-    const clientToken = statusMatch[1];
-    const txn = memoryTransactions[clientToken];
+    const txn = memoryTransactions[statusMatch[1]];
     res.statusCode = 200;
     return res.end(JSON.stringify(txn || { status: 'PENDING' }));
   }
 
-  // Safe fallback to prevent 404 on unexpected paths
+  // ─── Fallback ────────────────────────────────────────────────────────────────
   res.statusCode = 200;
-  return res.end(JSON.stringify({ status: 'ok', fallback: true, config: memoryConfig }));
+  return res.end(JSON.stringify({ status: 'ok', fallback: true }));
 };
